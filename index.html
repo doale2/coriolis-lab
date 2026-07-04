@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>전향력 실험실</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: min(1100px, 96vw);
+      padding: 18px 8px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      letter-spacing: -0.04em;
+    }
+
+    .credit {
+      text-align: right;
+      font-size: 16px;
+      line-height: 1.45;
+      color: #111827;
+      font-weight: 800;
+      white-space: nowrap;
+      padding: 8px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid #d1d5db;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .app {
+      width: min(1120px, 96vw);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 14px;
+      padding: 8px 0 20px;
+      align-items: start;
+    }
+
+    .canvas-card,
+    .control-card {
+      background: var(--panel);
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .canvas-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      background: radial-gradient(circle at 50% 45%, #ffffff 0%, #f8fafc 62%, #eef2f7 100%);
+    }
+
+    .hint {
+      padding: 10px 14px 12px;
+      border-top: 1px solid #e5e7eb;
+      background: #ffffff;
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.55;
+    }
+
+    .hint-title {
+      font-weight: 800;
+      margin-right: 8px;
+      color: #111827;
+    }
+
+    .hint-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      margin-top: 4px;
+    }
+
+    .hint-list span {
+      white-space: nowrap;
+    }
+
+    .control-card {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .control-title {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .value {
+      color: var(--accent);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      background: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    select,
+    button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .danger {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .note {
+      padding: 11px 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.5;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      max-height: 180px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .legend-item {
+      display: grid;
+      grid-template-columns: 14px 1fr;
+      gap: 8px;
+      align-items: start;
+      font-size: 12px;
+      color: #4b5563;
+      line-height: 1.35;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      margin-top: 1px;
+    }
+
+    @media (max-width: 880px) {
+      body {
+        align-items: stretch;
+      }
+
+      header {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: row;
+        padding: 10px 12px 6px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .credit {
+        text-align: right;
+        font-size: 12px;
+        padding: 6px 8px;
+        border-radius: 10px;
+      }
+
+      .app {
+        width: 100%;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 6px 8px 14px;
+      }
+
+      .control-card {
+        order: -1;
+        padding: 11px;
+        gap: 10px;
+        border-radius: 14px;
+      }
+
+      .control-title {
+        font-size: 16px;
+      }
+
+      .control-group {
+        gap: 5px;
+      }
+
+      select,
+      button {
+        padding: 9px 10px;
+      }
+
+      .button-grid {
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 6px;
+      }
+
+      .button-grid button {
+        font-size: 13px;
+        padding: 9px 6px;
+      }
+
+      canvas {
+        height: min(78vw, 430px);
+      }
+
+      .hint {
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+
+      .hint-list {
+        gap: 4px 8px;
+      }
+
+      .hint-list span {
+        white-space: normal;
+      }
+
+      .note,
+      .record-panel {
+        display: none;
+      }
+    }
+
+    @media (max-width: 520px) {
+      header {
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .credit {
+        text-align: left;
+      }
+
+      .button-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .button-grid .primary {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>전향력 실험실</h1>
+    </div>
+    <div class="credit">
+      26-1 지구과학탐구지도<br />
+      지구과학교육과 이도현
+    </div>
+  </header>
+
+  <main class="app">
+    <section class="canvas-card">
+      <canvas id="labCanvas"></canvas>
+      <div class="hint">
+        <span class="hint-title">핵심 보기</span>
+        <div class="hint-list">
+          <span>① 공은 화면에서 직선 운동</span>
+          <span>② 원판과 자국은 함께 회전</span>
+          <span>③ 1초 표시는 같은 시간 비교용</span>
+                  </div>
+      </div>
+    </section>
+
+    <aside class="control-card">
+      <h2 class="control-title">실험 조건</h2>
+
+      <div class="control-group">
+        <div class="control-row">
+          <label for="omega">판의 회전속도</label>
+          <span class="value" id="omegaValue">60 °/s</span>
+        </div>
+        <input id="omega" type="range" min="0" max="180" value="60" step="1" />
+      </div>
+
+      <div class="control-group">
+        <div class="control-row">
+          <label for="ballSpeed">공의 속도</label>
+          <span class="value" id="ballSpeedValue">120 px/s</span>
+        </div>
+        <input id="ballSpeed" type="range" min="30" max="200" value="90" step="1" />
+      </div>
+
+      <div class="control-group">
+        <label for="direction">회전 방향</label>
+        <select id="direction">
+          <option value="ccw">반시계 방향</option>
+          <option value="cw">시계 방향</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label class="toggle-row" for="oneSecToggle">
+          <input id="oneSecToggle" type="checkbox" checked />
+          <span>출발 1초 후 위치 표시</span>
+        </label>
+      </div>
+
+      <div class="button-grid">
+        <button class="primary" id="startBtn">새 실험 시작</button>
+        <button id="pauseBtn">일시정지</button>
+        <button class="danger" id="clearBtn">지우기</button>
+      </div>
+
+      <div class="note">
+        <strong>비교 방법</strong><br />
+        전체 궤적은 원판 위에 머문 시간의 영향을 받습니다. <strong>1초 표시</strong>를 켜면 같은 시간 동안의 이탈 거리를 비교할 수 있습니다.
+      </div>
+
+      <div class="record-panel">
+        <h3 style="margin: 0 0 8px; font-size: 15px;">실험 기록</h3>
+        <div class="legend" id="legend"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('labCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const omegaInput = document.getElementById('omega');
+    const ballSpeedInput = document.getElementById('ballSpeed');
+    const directionInput = document.getElementById('direction');
+    const omegaValue = document.getElementById('omegaValue');
+    const ballSpeedValue = document.getElementById('ballSpeedValue');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const oneSecToggle = document.getElementById('oneSecToggle');
+    const legend = document.getElementById('legend');
+
+    const colors = ['#dc2626', '#2563eb', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#4b5563', '#be123c'];
+
+    // 1초 뒤 위치가 항상 원판 안에 있도록 제한하되, 표시되는 최대값은 200으로 맞춘다.
+    const HARD_MAX_BALL_SPEED = 200;
+    const SPEED_LIMIT_RATIO = 0.88;
+    const MIN_BALL_SPEED = 30;
+
+    let dpr = window.devicePixelRatio || 1;
+    let width = 0;
+    let height = 0;
+    let cx = 0;
+    let cy = 0;
+    let diskRadius = 270;
+
+    let diskAngle = 0;
+    let running = false;
+    let paused = false;
+    let currentRun = null;
+    let traces = [];
+    let lastTimestamp = performance.now();
+    let colorIndex = 0;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      width = rect.width;
+      height = rect.height;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      cx = width / 2;
+      cy = height / 2 + 20;
+      diskRadius = Math.min(width, height) * 0.39;
+      updateSpeedLimit();
+      updateLabels();
+    }
+
+
+    function updateSpeedLimit() {
+      // 공이 최대 속도로 1초 동안 이동해도 원판을 벗어나지 않도록 제한한다.
+      // 모바일에서는 원판 반지름이 작아지므로, 화면 크기에 따라 최댓값도 자동으로 낮아진다.
+      const safeMax = Math.max(MIN_BALL_SPEED + 10, Math.floor(diskRadius * SPEED_LIMIT_RATIO));
+      const cappedMax = Math.min(HARD_MAX_BALL_SPEED, safeMax);
+
+      ballSpeedInput.min = String(MIN_BALL_SPEED);
+      ballSpeedInput.max = String(cappedMax);
+
+      if (Number(ballSpeedInput.value) > cappedMax) {
+        ballSpeedInput.value = String(cappedMax);
+      }
+    }
+
+    function updateLabels() {
+      omegaValue.textContent = `${omegaInput.value} °/s`;
+      ballSpeedValue.textContent = `${ballSpeedInput.value} px/s`;
+      ballSpeedInput.title = `최대 ${ballSpeedInput.max} px/s: 1초 위치가 원판 안에 표시되도록 제한됨`;
+    }
+
+    function getOmegaRadPerSec() {
+      const omegaDeg = Number(omegaInput.value);
+
+      // Canvas에서는 양의 회전각이 화면상 시계방향으로 보인다.
+      // 그래서 반시계 방향은 음수, 시계 방향은 양수로 둔다.
+      const directionSign = directionInput.value === 'cw' ? 1 : -1;
+      return directionSign * omegaDeg * Math.PI / 180;
+    }
+
+    function directionName() {
+      return directionInput.value === 'cw' ? '시계 방향' : '반시계 방향';
+    }
+
+    function startExperiment() {
+      const omega = getOmegaRadPerSec();
+      const speed = Number(ballSpeedInput.value);
+      const color = colors[colorIndex % colors.length];
+      colorIndex++;
+
+      // 시작 순간의 원판 기준선 방향을 발사 방향으로 삼는다.
+      // 공은 이후 이 방향으로 화면에서 직선 등속 운동한다.
+      const launchAngle = diskAngle;
+      const launchDir = {
+        x: Math.cos(launchAngle),
+        y: Math.sin(launchAngle)
+      };
+
+      // 속도 범위를 제한했기 때문에 1초 뒤 위치는 항상 원판 안에 있다.
+      const markerTime = 1;
+      const markerR = speed;
+      const markerWorldX = launchDir.x * markerR;
+      const markerWorldY = launchDir.y * markerR;
+      const markerDiskAngle = diskAngle + omega * markerTime;
+      const markerPlatePoint = worldToPlate(markerWorldX, markerWorldY, markerDiskAngle);
+      const timeToEdge = diskRadius / speed;
+
+      currentRun = {
+        startAngle: diskAngle,
+        launchAngle,
+        launchDir,
+        omega,
+        speed,
+        time: 0,
+        ballX: 0,
+        ballY: 0,
+        color,
+        label: `${directionName()}, ${omegaInput.value}°/s, 공 ${speed}px/s`,
+        platePoints: [],
+        oneSecondPlatePoint: markerPlatePoint,
+        oneSecondMarkerTime: markerTime,
+        timeToEdge
+      };
+
+      traces.push(currentRun);
+      running = true;
+      paused = false;
+      renderLegend();
+    }
+
+    function clearTraces() {
+      traces = [];
+      currentRun = null;
+      running = false;
+      paused = false;
+      diskAngle = 0;
+      renderLegend();
+    }
+
+    function rotatePoint(x, y, angle) {
+      const c = Math.cos(angle);
+      const s = Math.sin(angle);
+      return {
+        x: x * c - y * s,
+        y: x * s + y * c
+      };
+    }
+
+    function worldToPlate(x, y, angle) {
+      return rotatePoint(x, y, -angle);
+    }
+
+    function plateToWorld(x, y, angle) {
+      return rotatePoint(x, y, angle);
+    }
+
+    function update(dt) {
+      const omega = getOmegaRadPerSec();
+
+      if (!paused) {
+        // 원판은 현재 슬라이더 조건에 따라 계속 시각적으로 회전한다.
+        diskAngle += omega * dt;
+      }
+
+      if (!running || paused || !currentRun) return;
+
+      currentRun.time += dt;
+
+      // 공은 시작 순간의 발사 방향으로 직선 등속 운동한다.
+      const r = currentRun.speed * currentRun.time;
+      const limitedR = Math.min(r, diskRadius);
+      const ballX = currentRun.launchDir.x * limitedR;
+      const ballY = currentRun.launchDir.y * limitedR;
+
+      currentRun.ballX = ballX;
+      currentRun.ballY = ballY;
+
+      // 현재 공의 세계 좌표를 현재 원판 좌표로 변환하여 원판 위 잉크 자국으로 저장한다.
+      const platePoint = worldToPlate(ballX, ballY, diskAngle);
+      const points = currentRun.platePoints;
+      const last = points[points.length - 1];
+
+      if (!last || Math.hypot(platePoint.x - last.x, platePoint.y - last.y) > 1.4) {
+        points.push(platePoint);
+      }
+
+      if (r >= diskRadius) {
+        running = false;
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      drawDisk();
+      drawTraces();
+      drawOneSecondMarkers();
+      drawLaunchGuide();
+      drawBall();
+      drawStatus();
+    }
+
+    function drawDisk() {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(diskAngle);
+
+      ctx.beginPath();
+      ctx.arc(0, 0, diskRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fill();
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.clip();
+
+      // 원판 격자 원
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      for (let r = diskRadius / 4; r < diskRadius; r += diskRadius / 4) {
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 원판 방사선
+      for (let deg = 0; deg < 360; deg += 15) {
+        const a = deg * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(diskRadius * Math.cos(a), diskRadius * Math.sin(a));
+        ctx.stroke();
+      }
+
+      // 원판 위 기준선: 실제로 돌아가는 것이 잘 보이도록 진하게 표시
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(diskRadius, 0);
+      ctx.stroke();
+
+      // 발사 방향 표시용 작은 화살표 머리
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath();
+      ctx.moveTo(diskRadius, 0);
+      ctx.lineTo(diskRadius - 18, -8);
+      ctx.lineTo(diskRadius - 18, 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawTraces() {
+      for (const trace of traces) {
+        if (trace.platePoints.length < 2) continue;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.beginPath();
+
+        for (let i = 0; i < trace.platePoints.length; i++) {
+          const p = trace.platePoints[i];
+          // 저장된 점은 원판 좌표계의 점이므로, 현재 원판 각도로 다시 돌려서 그린다.
+          const w = plateToWorld(p.x, p.y, diskAngle);
+          if (i === 0) ctx.moveTo(w.x, w.y);
+          else ctx.lineTo(w.x, w.y);
+        }
+
+        ctx.strokeStyle = trace.color;
+        ctx.lineWidth = trace === currentRun && running ? 4 : 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawOneSecondMarkers() {
+      if (!oneSecToggle.checked) return;
+
+      for (const trace of traces) {
+        if (!trace.oneSecondPlatePoint) continue;
+
+        // 현재 진행 중인 실험에서는 정확히 1초가 지난 뒤에만 표시한다.
+        if (trace === currentRun && running && trace.time < trace.oneSecondMarkerTime) continue;
+
+        const w = plateToWorld(trace.oneSecondPlatePoint.x, trace.oneSecondPlatePoint.y, diskAngle);
+        const label = '1초';
+
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        ctx.fillStyle = trace.color;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(w.x, w.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#111827';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+        ctx.lineWidth = 4;
+        ctx.font = 'bold 13px system-ui, sans-serif';
+        ctx.strokeText(label, w.x + 11, w.y - 10);
+        ctx.fillText(label, w.x + 11, w.y - 10);
+
+        ctx.restore();
+      }
+    }
+
+    function drawLaunchGuide() {
+      // 실험 전에는 현재 원판 기준선이 발사 방향이다.
+      // 실험 중/직후에는 공이 실제로 움직인 고정된 직선 방향을 표시한다.
+      const angle = currentRun ? currentRun.launchAngle : diskAngle;
+      const x = Math.cos(angle) * diskRadius;
+      const y = Math.sin(angle) * diskRadius;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.strokeStyle = 'rgba(17, 24, 39, 0.28)';
+      ctx.setLineDash([7, 7]);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(17, 24, 39, 0.68)';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.fillText('직선 운동 방향', x * 0.33 + 8, y * 0.33 - 10);
+      ctx.restore();
+    }
+
+    function drawBall() {
+      if (!currentRun) return;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(currentRun.ballX, currentRun.ballY, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawStatus() {
+      ctx.save();
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.fillStyle = '#374151';
+
+      let text = '새 실험 시작을 누르면 현재 기준선 방향으로 공이 출발합니다.';
+      if (paused) text = '일시정지 상태입니다.';
+      else if (running) text = '실험 진행 중: 공은 직선, 원판과 자국은 회전합니다.';
+      else if (currentRun) text = '공이 원판 가장자리에 도달했습니다.';
+
+      ctx.fillText(text, 20, height - 24);
+      ctx.restore();
+    }
+
+    function renderLegend() {
+      legend.innerHTML = '';
+      const recent = traces.slice(-8).reverse();
+
+      if (recent.length === 0) {
+        legend.innerHTML = '<div style="font-size:12px;color:#6b7280;line-height:1.5;">아직 기록된 궤적이 없습니다.</div>';
+        return;
+      }
+
+      for (const trace of recent) {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        swatch.style.background = trace.color;
+
+        const label = document.createElement('span');
+        label.textContent = trace.label;
+
+        item.appendChild(swatch);
+        item.appendChild(label);
+        legend.appendChild(item);
+      }
+    }
+
+    function loop(timestamp) {
+      const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.04);
+      lastTimestamp = timestamp;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    omegaInput.addEventListener('input', updateLabels);
+    ballSpeedInput.addEventListener('input', updateLabels);
+    oneSecToggle.addEventListener('change', draw);
+    startBtn.addEventListener('click', startExperiment);
+    pauseBtn.addEventListener('click', () => {
+      if (currentRun) paused = !paused;
+    });
+    clearBtn.addEventListener('click', clearTraces);
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    updateLabels();
+    renderLegend();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
